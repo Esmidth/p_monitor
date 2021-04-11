@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "/home/esmidth/.pyenv/versions/miniconda3-4.7.12/envs/test/bin/python"
+    "python.pythonPath": "/home/esmidth/.pyenv/versions/miniconda3-4.7.12/envs/test/bin/python",
+    "cmake.sourceDirectory": "${workspaceFolder}/cpp"
 }

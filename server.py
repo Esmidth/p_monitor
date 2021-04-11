@@ -11,7 +11,7 @@ while True:
     message = socket.recv()
     print(f"Received request: {message}")
 
-    time.sleep(1)
+    # time.sleep(1)
 
     res = 'World ' + str(i)
     i += 1
