@@ -3,6 +3,10 @@ import time
 from typing import AbstractSet
 import zmq
 
+from flask import Flask, Response
+from prometheus_client import Counter, generate_latest
+
+app = Flask(__name__)
 
 exitFlag = 0
 
@@ -11,8 +15,7 @@ global_sec = 0
 
 
 # class Running_Metrics:
-#     def __init__(self):
-#         self.
+    # def __init__(self):
 # class Perf_Metric:
 #     nodeNum:int
 #     sec:int
@@ -31,6 +34,13 @@ global_sec = 0
 
 perf_metric_dict = {}
 
+# sec = Counter
+
+
+@app.route('/metrics')
+def hello():
+    global perf_metric_dict
+    return Response(str(perf_metric_dict),mimetype='text/plain')
 
 
 class DataCatcher(threading.Thread):
@@ -44,18 +54,16 @@ class DataCatcher(threading.Thread):
         self.socket.bind('tcp://*:5555')
         # self.perf_metric_dict = {}
 
-    def getData(self,input_string):
+    def getData(self, input_string):
         global perf_metric_dict
         perf_metric_dict = {}
         split_num = input_string.count(',')
         # print(split_num)
-        split_res = input_string.split(',',split_num)
+        split_res = input_string.split(',', split_num)
         for sub_string in split_res:
-            sub_string_split = sub_string.split(':',1)
+            sub_string_split = sub_string.split(':', 1)
             perf_metric_dict[sub_string_split[0]] = int(sub_string_split[1])
         # self.perf_metric_dict = perf_metric_dict
-
-
 
     def run(self):
         global global_sec
@@ -71,7 +79,6 @@ class DataCatcher(threading.Thread):
             self.socket.send_string("123")
 
 
-
 class Timer(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -83,17 +90,18 @@ class Timer(threading.Thread):
         while True:
             global_sec += 1
             time.sleep(1)
-            print("sec:{}\t{}".format(global_sec,perf_metric_dict))
+            print("sec:{}\t{}".format(global_sec, perf_metric_dict))
             # self.sec += 1
 
 
-thread1 = Timer()
-thread2 = DataCatcher(1)
+if __name__ == "__main__":
+    thread1 = Timer()
+    thread2 = DataCatcher(1)
 
+    thread1.start()
+    thread2.start()
 
-thread1.start()
-thread2.start()
-
-thread1.join()
-thread2.join()
-print('Exit Main THread')
+    app.run(host="0.0.0.0", port=8888)
+    thread1.join()
+    thread2.join()
+    print('Exit Main THread')

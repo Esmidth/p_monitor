@@ -14,6 +14,7 @@ app = Flask(__name__)
 
 
 counter = Counter("my_counter",'an example showed how to use counter')
+counter1 = Counter("test1","test2")
 
 
 
@@ -22,8 +23,9 @@ counter = Counter("my_counter",'an example showed how to use counter')
 @app.route('/metrics')
 def hello():
     counter.inc(1)
+    counter1.inc(5)
 
-    return Response(generate_latest(counter),mimetype='text/plain')
+    return Response(generate_latest(counter),generate_latest(counter1),mimetype='text/plain')
 
 
 if __name__ == "__main__":
