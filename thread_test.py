@@ -4,9 +4,16 @@ from typing import AbstractSet
 import zmq
 
 from flask import Flask, Response
-from prometheus_client import Counter, generate_latest
+from prometheus_client import Counter, Gauge,Histogram,Summary,generate_latest,CollectorRegistry, registry
+
 
 app = Flask(__name__)
+registry = CollectorRegistry()
+counter = Counter('my_counter','',['machine_ip'],registry=registry)
+gauge = Gauge('my_gauge','',['machine_ip'],registry=registry)
+buckets = (100,200,300,500,1000,3000,10000,float('inf'))
+histogram = Histogram('my_histogram','',['machine_ip'],registry=registry,buckets=buckets)
+summary = Summary('my_summary','an example ',['machine_ip'],registry=registry)
 
 exitFlag = 0
 
@@ -34,13 +41,19 @@ global_sec = 0
 
 perf_metric_dict_list = []
 
+
 # sec = Counter
 
 
 @app.route('/metrics')
 def hello():
+    counter.labels('127.0.0.1').inc(1)
+    gauge.labels('127.0.0.1').set(2)
+    histogram.labels('127.0.0.1').observe(1001)
+    summary.labels('127.0.0.1').observe(1)
     global perf_metric_dict_list
-    return Response(str(perf_metric_dict_list),mimetype='text/plain')
+    # return Response(str(perf_metric_dict_list),mimetype='text/plain')
+    return Response(generate_latest(registry),mimetype='text/plain')
 
 
 # class ChannelCatcher(threading.Thread):
@@ -70,12 +83,15 @@ class DataCatcher(threading.Thread):
         for sub_string in split_res:
             sub_string_split = sub_string.split(':', 1)
             perf_metric_dict[sub_string_split[0]] = int(sub_string_split[1])
+        
+
         id = perf_metric_dict['nodeNum']
         # print(id)
         if id >= len(perf_metric_dict_list):
             perf_metric_dict_list.append(perf_metric_dict)
         else:
             perf_metric_dict_list[id] = perf_metric_dict
+
 
 
         # self.perf_metric_dict = perf_metric_dict
@@ -85,6 +101,8 @@ class DataCatcher(threading.Thread):
         message = self.socket.recv()
         global_sec = 0
         self.socket.send_string('1')
+
+
 
         while True:
             message = self.socket.recv().decode()
