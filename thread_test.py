@@ -32,30 +32,37 @@ global_sec = 0
 #     queue2_size:int
 #     queue3_size:int
 
-perf_metric_dict = {}
+perf_metric_dict_list = []
 
 # sec = Counter
 
 
 @app.route('/metrics')
 def hello():
-    global perf_metric_dict
-    return Response(str(perf_metric_dict),mimetype='text/plain')
+    global perf_metric_dict_list
+    return Response(str(perf_metric_dict_list),mimetype='text/plain')
+
+
+# class ChannelCatcher(threading.Thread):
+#     def __init__(self,ChannelID):
+#         threading.Thread.__init__(self)
+#         self.ChannelID = ChannelID
+#         self.Timer = Timer()
 
 
 class DataCatcher(threading.Thread):
-    def __init__(self, threadID):
+    def __init__(self, threadID,portID):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.counter = 0
 
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind('tcp://*:5555')
+        self.socket.bind('tcp://*:'+str(portID))
         # self.perf_metric_dict = {}
 
     def getData(self, input_string):
-        global perf_metric_dict
+        global perf_metric_dict_list
         perf_metric_dict = {}
         split_num = input_string.count(',')
         # print(split_num)
@@ -63,6 +70,14 @@ class DataCatcher(threading.Thread):
         for sub_string in split_res:
             sub_string_split = sub_string.split(':', 1)
             perf_metric_dict[sub_string_split[0]] = int(sub_string_split[1])
+        id = perf_metric_dict['nodeNum']
+        # print(id)
+        if id >= len(perf_metric_dict_list):
+            perf_metric_dict_list.append(perf_metric_dict)
+        else:
+            perf_metric_dict_list[id] = perf_metric_dict
+
+
         # self.perf_metric_dict = perf_metric_dict
 
     def run(self):
@@ -90,16 +105,21 @@ class Timer(threading.Thread):
         while True:
             global_sec += 1
             time.sleep(1)
-            print("sec:{}\t{}".format(global_sec, perf_metric_dict))
+            print("sec:{}\t{}".format(global_sec, perf_metric_dict_list))
             # self.sec += 1
 
 
 if __name__ == "__main__":
     thread1 = Timer()
-    thread2 = DataCatcher(1)
+    thread2 = DataCatcher(1,portID=5555)
+    thread3 = DataCatcher(1,portID=5556)
+    thread4 = DataCatcher(1,portID=5557)
+
 
     thread1.start()
     thread2.start()
+    thread3.start()
+    thread4.start()
 
     app.run(host="0.0.0.0", port=8888)
     thread1.join()

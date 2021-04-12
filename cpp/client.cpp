@@ -45,7 +45,7 @@ void timer(int id)
 
     zmq::context_t context{1};
     zmq::socket_t socket{context, zmq::socket_type::req};
-    socket.connect("tcp://localhost:5555");
+    socket.connect("tcp://localhost:"+std::to_string(5555+id));
     const std::string data{" Hello from client @ sec: "};
     int sec = 0;
     while (true)
@@ -66,7 +66,7 @@ void timer(int id)
         // std::cout << " (" << sec << ")";
         // std::cout << std::endl;
         printf("sec:%d\n", metric.sec);
-        metric.sec++;
+        metric.sec += 1;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
@@ -74,8 +74,9 @@ void timer(int id)
 int main()
 {
 
-    std::thread t1(timer, 1);
-    // std::thread t2(timer,2);
+    std::thread t1(timer, 0);
+    std::thread t2(timer, 1);
+    std::thread t3(timer, 2);
     // initialize the zmq context with a single IO thread
 
     // construct a REQ (request) socket and connect to interface
