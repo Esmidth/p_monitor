@@ -4,3 +4,5 @@
 
 
 ## Use Python Server as a Prometheus exporter to monitor the C++ values
+
+## C++ zeromq installation
